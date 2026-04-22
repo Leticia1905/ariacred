@@ -423,7 +423,7 @@ export default function App() {
       <div style={{background:S1,borderBottom:"1px solid #1a1a1a",position:"sticky",top:62,zIndex:99,overflowX:"auto"}}>
         <div style={{maxWidth:900,margin:"0 auto",display:"flex"}}>
           {TABS.map((t,i)=>(
-            <button key={t} onClick={()=>setTab(i)} style={{...(css.tab ? css.tab[i] : {}),flex:"none",,padding:"12px 16px",fontSize:11,fontWeight:tab===i?700:400,color:tab===i?G:"#555",background:"none",border:"none",borderBottom:tab===i?`2px solid ${G}`:"2px solid transparent",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",letterSpacing:.5,position:"relative"}}}>
+            <button key={t} onClick={()=>setTab(i)} style={{...(css.tab ? css.tab[i] : {}),flex:"none",padding:"12px 16px",fontSize:11,fontWeight:tab===i?700:400,color:tab===i?G:"#555",background:"none",border:"none",borderBottom:tab===i?`2px solid ${G}`:"2px solid transparent",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",letterSpacing:.5,position:"relative"}}}>
               {t}
               {i===2&&cobrarHoje>0&&<span style={{position:"absolute",top:6,right:4,background:RD,color:"#fff",borderRadius:10,fontSize:8,padding:"1px 5px",fontWeight:800}}>{cobrarHoje}</span>}
             </button>
