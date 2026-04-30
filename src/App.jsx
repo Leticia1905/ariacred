@@ -28,7 +28,11 @@ const nomeDisplay = u => u?.displayName||u?.email?.split("@")[0]||"Usuário";
 // dividido pelo número de parcelas
 const calcParcelaValor = (capital, nparcelas) => {
   if (!capital || !nparcelas) return 0;
-  const total = capital * (1 + 0.35 + 0.35 + 0.30);
+  // Cada mês tem 35% de juros sobre o capital original
+  // Total = capital + (capital × 35% × nparcelas)
+  // Parcela = Total ÷ nparcelas
+  const totalJuros = capital * 0.35 * nparcelas;
+  const total = capital + totalJuros;
   return total / nparcelas;
 };
 
@@ -510,7 +514,7 @@ function NovoClienteForm({clientes,onAdd}) {
             </div>
           </div>
           {f.capital&&f.parcelas&&<div style={{background:BG,borderRadius:8,padding:"10px 14px",marginTop:4,border:`1px solid ${G}22`,fontSize:12,color:"#888"}}>
-            {fmt(parseFloat(f.capital))} × 2,0 ÷ {f.parcelas} = <span style={{color:G,fontWeight:700}}>{fmt(calcParcelaValor(parseFloat(f.capital),parseInt(f.parcelas)))}</span> por parcela
+            {fmt(parseFloat(f.capital))} + ({fmt(parseFloat(f.capital))} × 35% × {f.parcelas}x) ÷ {f.parcelas} = <span style={{color:G,fontWeight:700}}>{fmt(calcParcelaValor(parseFloat(f.capital),parseInt(f.parcelas)))}</span> por parcela
           </div>}
         </>}
         <div style={css.row}>
@@ -612,7 +616,8 @@ export default function App() {
   const pct=Math.min((base/1e6)*100,100);
   const dia=diaHoje();
   const semana=getSemanaAtual();
-  const cobrarHoje=clientes.filter(c=>(c.status==="ativo"&&c.venc===dia)||c.status==="inadimplente").length;
+  const cobrarSemana=clientes.filter(c=>(c.status==="ativo"&&c.venc>=semana.inicio&&c.venc<=semana.fim)||c.status==="inadimplente").length;
+  const cobrarHoje=cobrarSemana;
 
   // Helpers Firestore
   const addCliente=async(novo)=>{
@@ -813,16 +818,15 @@ export default function App() {
 
         {/* ── COBRANÇA */}
         {tab===3&&<>
-          {cobrarHoje===0&&<div style={{...css.card,textAlign:"center",padding:32}}>
+          {cobrarSemana===0&&<div style={{...css.card,textAlign:"center",padding:32}}>
             <div style={{fontSize:28,color:GR,marginBottom:8}}>✓</div>
-            <div style={{fontSize:14,color:GR,fontWeight:700}}>Sem cobranças hoje</div>
-            <div style={{fontSize:11,color:"#555",marginTop:4}}>Dia {dia}</div>
+            <div style={{fontSize:14,color:GR,fontWeight:700}}>Sem cobranças esta semana</div>
+            <div style={{fontSize:11,color:"#555",marginTop:4}}>Semana: dia {semana.inicio} ao dia {semana.fim}</div>
           </div>}
 
           {[
-            {titulo:`Vencem Hoje — Dia ${dia}`,lista:clientes.filter(c=>c.status==="ativo"&&c.venc===dia),atrasado:false,cor:G},
+            {titulo:`Vencem Esta Semana (Dia ${semana.inicio} ao ${semana.fim})`,lista:clientes.filter(c=>c.status==="ativo"&&c.venc>=semana.inicio&&c.venc<=semana.fim),atrasado:false,cor:G},
             {titulo:`Inadimplentes (${inad.length})`,lista:inad,atrasado:true,cor:RD},
-            {titulo:`Vencem Esta Semana (${semana.inicio}–${semana.fim})`,lista:venceSemana.filter(c=>c.venc!==dia),atrasado:false,cor:BL},
           ].map(({titulo,lista,atrasado,cor})=>lista.length>0&&(
             <div key={titulo} style={css.card}>
               <div style={{...css.st,color:cor}}>{titulo}</div>
