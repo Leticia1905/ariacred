@@ -621,13 +621,10 @@ const [filtroTipo,setFiltroTipo]=useState(null);
 
 useEffect(()=>{ return onAuthStateChanged(auth,u=>setUser(u||null)); },[]);
 
+// Seed clientes iniciais se banco vazio
 useEffect(()=>{
 if(!user) return;
-const q=query(collection(db,“clientes”),orderBy(“criadoEm”,“asc”));
-const unsub = onSnapshot(q,async snap=>{
-const docs = snap.docs.map(d=>({id:d.id,…d.data()}));
-// Se banco vazio, cadastra clientes iniciais
-if(docs.length===0){
+const seedClientes = async () => {
 const iniciais = [
 {nome:“Vanessa Anselmo”,cpf:””,endereco:””,telefone:””,tipo:“normal”,capital:200,venc:1,status:“ativo”,indicadoPor:””,parcelas:0,parcelaValor:0,parcelasPagas:0,dataInicio:“01/04/2026”,obs:””,documentos:[],historico:[]},
 {nome:“Michel 7cordas”,cpf:””,endereco:””,telefone:””,tipo:“normal”,capital:300,venc:4,status:“ativo”,indicadoPor:””,parcelas:0,parcelaValor:0,parcelasPagas:0,dataInicio:“01/04/2026”,obs:””,documentos:[],historico:[]},
@@ -649,11 +646,17 @@ const iniciais = [
 for(const c of iniciais){
 await addDoc(collection(db,“clientes”),{…c,criadoPor:user.uid,criadoEm:new Date().toISOString()});
 }
-return;
-}
+};
+const q=query(collection(db,“clientes”),orderBy(“criadoEm”,“asc”));
+const unsub = onSnapshot(q, snap=>{
+const docs = snap.docs.map(d=>({id:d.id,…d.data()}));
+if(docs.length===0){
+seedClientes();
+} else {
 setClientes(docs);
-},()=>{});
-return unsub;
+}
+}, ()=>{});
+return ()=>unsub();
 },[user]);
 
 if(user===undefined) return <div style={{…css.app,display:“flex”,alignItems:“center”,justifyContent:“center”,minHeight:“100vh”}}><div style={{fontSize:22,fontWeight:800,color:G,fontFamily:”‘Syne’,sans-serif”}}>ÁRIACRED</div></div>;
