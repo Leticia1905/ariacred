@@ -39,24 +39,35 @@ return total / nparcelas;
 // ── SEMANA ATUAL
 const getSemanaAtual = () => {
 const hoje = new Date();
-const diaSemana = hoje.getDay(); // 0=dom, 6=sab
+const diaSemana = hoje.getDay();
 const inicioDate = new Date(hoje);
 inicioDate.setDate(hoje.getDate() - diaSemana);
+inicioDate.setHours(0,0,0,0);
 const fimDate = new Date(inicioDate);
 fimDate.setDate(inicioDate.getDate() + 6);
-// Retorna array de dias do mês que pertencem à semana
-const dias = [];
+fimDate.setHours(23,59,59,999);
+// Gera array com {dia, mes} de cada dia da semana
+const diasSemana = [];
 for(let i=0;i<7;i++){
 const d = new Date(inicioDate);
 d.setDate(inicioDate.getDate()+i);
-dias.push(d.getDate());
+diasSemana.push({ dia: d.getDate(), mes: d.getMonth() });
 }
-return {
-inicio: inicioDate.getDate(),
-fim: fimDate.getDate(),
-dias,
-label: `${inicioDate.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} a ${fimDate.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`
+const label = `${inicioDate.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} a ${fimDate.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`;
+// Para comparar com venc (dia do mês), inclui todos os dias da semana
+const dias = diasSemana.map(d => d.dia);
+const mesAtual = hoje.getMonth();
+return { inicio: inicioDate.getDate(), fim: fimDate.getDate(), dias, diasSemana, label, mesAtual };
 };
+
+// Verifica se um cliente vence nessa semana considerando mês
+const venceNaSemana = (cliente, semana) => {
+if(cliente.status !== “ativo”) return false;
+// Se a semana não cruza mês, comparação simples
+const mesmomes = semana.diasSemana.every(d => d.mes === semana.mesAtual);
+if(mesmomes) return semana.dias.includes(cliente.venc);
+// Semana cruza mês: verifica se o dia do vencimento existe nessa semana
+return semana.diasSemana.some(d => d.dia === cliente.venc);
 };
 
 // ── ESTILOS
@@ -661,7 +672,7 @@ const totJ=jN+jP;
 const pct=Math.min((base/1e6)*100,100);
 const dia=diaHoje();
 const semana=getSemanaAtual();
-const cobrarSemana=clientes.filter(c=>(c.status===“ativo”&&semana.dias.includes(c.venc))||c.status===“inadimplente”).length;
+const cobrarSemana=clientes.filter(c=>(venceNaSemana(c, semana))||c.status===“inadimplente”).length;
 const cobrarHoje=cobrarSemana;
 
 // Helpers Firestore
@@ -722,7 +733,7 @@ setClienteModal(c);
 };
 
 // Clientes que vencem essa semana
-const venceSemana=clientes.filter(c=>c.status===“ativo”&&semana.dias.includes(c.venc));
+const venceSemana=clientes.filter(c=>venceNaSemana(c, semana));
 
 return (
 <div style={css.app}>
@@ -871,7 +882,7 @@ return (
       </div>}
 
       {[
-        {titulo:`Cobrança da Semana (${semana.label})`,lista:clientes.filter(c=>c.status==="ativo"&&semana.dias.includes(c.venc)),atrasado:false,cor:G},
+        {titulo:`Cobrança da Semana (${semana.label})`,lista:clientes.filter(c=>venceNaSemana(c, semana)),atrasado:false,cor:G},
         {titulo:`Inadimplentes (${inad.length})`,lista:inad,atrasado:true,cor:RD},
       ].map(({titulo,lista,atrasado,cor})=>lista.length>0&&(
         <div key={titulo} style={css.card}>
