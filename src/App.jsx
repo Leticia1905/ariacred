@@ -8,7 +8,7 @@ import {
 collection, addDoc, onSnapshot, updateDoc,
 doc, deleteDoc, query, orderBy, getDoc, setDoc
 } from "firebase/firestore";
-const LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAAAAXNSR0IAr
+const LOGO = "/logo.png";
 // -- CORES
 const G="#C9A84C",BG="#000",S1="#0a0a0a",S2="#111",S3="#161616";
 const GR="#22c55e",RD="#ef4444",BL="#3b82f6",PU="#a855f7";
